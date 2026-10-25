@@ -30,7 +30,7 @@
       border-radius: 28px;
       padding: 2.75rem 2rem;
       width: 100%;
-      max-width: 400px;
+      max-width: 420px;
       text-align: center;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
@@ -46,7 +46,7 @@
       text-transform: uppercase;
       background: rgba(255, 255, 255, 0.04);
       border: 1px solid var(--border);
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
     .dot {
       width: 9px;
@@ -76,12 +76,26 @@
       font-size: 0.95rem;
       font-weight: 500;
     }
+    .time-range {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 1.25rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #d1d5db;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
     .progress-track {
       width: 100%;
       height: 6px;
       background: var(--border);
       border-radius: 999px;
-      margin-top: 2.25rem;
+      margin-top: 2rem;
       overflow: hidden;
     }
     .progress-fill {
@@ -103,17 +117,28 @@
   <div class="timer" id="timer-display">--:--</div>
   <div class="subtitle" id="sub-label">Sunucu kontrol ediliyor...</div>
 
+  <div class="time-range" id="time-range-display">
+    <span id="range-text">--:-- - --:--</span>
+  </div>
+
   <div class="progress-track">
     <div class="progress-fill" id="progress-bar"></div>
   </div>
 </div>
 
 <script>
-  // BURAYA VERCEL API ADRESİNİ YAZ:
-  const API_URL = "https://durum-five.vercel.app/api/session";
+  // Kendi Vercel URL'ini buraya yaz:
+  const API_URL = "https://durum-five.vercel.app.vercel.app/api/session";
 
   let targetEndTime = null;
   let totalDurationMs = null;
+
+  function formatTime(timestamp) {
+    const d = new Date(timestamp);
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
 
   async function syncStatus() {
     try {
@@ -125,12 +150,21 @@
       const timer = document.getElementById('timer-display');
       const sub = document.getElementById('sub-label');
       const progress = document.getElementById('progress-bar');
+      const rangeBox = document.getElementById('time-range-display');
+      const rangeText = document.getElementById('range-text');
 
       if (data.active) {
         targetEndTime = data.endsAt;
         totalDurationMs = data.durationMinutes * 60 * 1000;
         dot.className = 'dot live';
         label.innerText = data.note || 'Ders Devam Ediyor';
+        
+        // Başlama ve bitiş saatlerini yazdır
+        const startStr = formatTime(data.startedAt);
+        const endStr = formatTime(data.endsAt);
+        rangeText.innerText = `${startStr} – ${endStr}`;
+        rangeBox.style.display = 'inline-flex';
+
         updateClock();
       } else {
         targetEndTime = null;
@@ -139,6 +173,7 @@
         timer.innerText = '00:00';
         sub.innerText = 'Aktif bir seans bulunmuyor';
         progress.style.width = '0%';
+        rangeBox.style.display = 'none';
       }
     } catch (e) {
       console.error("Senkronizasyon hatası:", e);
@@ -172,7 +207,7 @@
 
   syncStatus();
   setInterval(updateClock, 1000);
-  setInterval(syncStatus, 15000); // 15 saniyede bir arka plan doğrulaması
+  setInterval(syncStatus, 15000);
 </script>
 
 </body>
